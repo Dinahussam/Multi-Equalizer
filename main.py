@@ -16,6 +16,7 @@ import librosa.display
 import librosa
 from scipy.fft import fft, fftfreq
 import plotly.graph_objects as go
+import altair as alt
 # AttributeError: partially initialized module 'functions' has no attribute 'Functions' (most likely due to a circular
 # import)
 
@@ -30,7 +31,7 @@ st.set_page_config(
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # styles from css file
-with open(r"C:\Users\Function\Desktop\DSP_Task2\style.css") as design:
+with open("style.css") as design:
     st.markdown(f"<style>{design.read()}</style>", unsafe_allow_html=True)
 
 # Lists
@@ -118,6 +119,8 @@ with col_after:
     col_after.write("#### After")
 
 
+
+
 if signal == 'Frequency':
     mode = signal_mode[0]
     index = 0
@@ -125,14 +128,17 @@ if signal == 'Frequency':
         with col[index]:
             st.write(freq_label)
             index += 1
-
     if functions.Functions.upload_store:
-        wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
+        # functions.plotShow(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
 
-        fig_layout_wav = functions.layout_fig(wav_fig)
-        col_before.plotly_chart(fig_layout_wav)
+    # if functions.Functions.upload_store:,functions.Functions.final_y_axis_time_domain
+    #     wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
+
+    #     fig_layout_wav = functions.layout_fig(wav_fig)
+    #     col_before.plotly_chart(fig_layout_wav)
 
         y_axis_after = functions.slider_change(0, 4000, 0, mode)
+        functions.plotShow(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
         # y_axis_after = functions.slider_change(frequencies_slider["0:100"][0], frequencies_slider["0:100"][1],
         #                                        sliders_value[0], mode)
         # y_axis_after += functions.slider_change(frequencies_slider["100:200"][0], frequencies_slider["100:200"][1],
@@ -146,14 +152,14 @@ if signal == 'Frequency':
 
         # y_ax = functions.y_axis_time_domain_ndarray
 
-        after_fig = px.line(x=functions.Functions.time_after, y=y_axis_after)
-        fig_layout_after = functions.layout_fig(after_fig)
-        col_after.plotly_chart(fig_layout_after)
+        # after_fig = px.line(x=functions.Functions.time_after, y=y_axis_after)
+        # fig_layout_after = functions.layout_fig(after_fig)
+        # col_after.plotly_chart(fig_layout_after)
 
-        Show_spectrogram = st.checkbox('Show spectrogram', value=False)
-        if Show_spectrogram:
-            col_before.plotly_chart(fig_layout_after)
-            col_after.plotly_chart(after_fig)
+        # Show_spectrogram = st.checkbox('Show spectrogram', value=False)
+        # if Show_spectrogram:
+        #     col_before.plotly_chart(fig_layout_after)
+        #     col_after.plotly_chart(after_fig)
 
 
 if signal == 'Vowels':

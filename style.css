@@ -10,7 +10,7 @@
 
 
 .css-1vq4p4l {
-    padding: 0px 1rem 1.5rem;
+    padding: 0px 1rem 5px;  /* ############################################### */
 }
 
 
@@ -71,7 +71,7 @@ h4 {
 }
 
 
- .exg6vvm14{
+.exg6vvm14{
 display:none;
 }
 
@@ -100,4 +100,22 @@ display:none;
     flex: 1 1 0%;
     flex-direction: column;
     gap: 0px;
+}
+
+/*.css-1huo2de {
+    width: 80px;
+    position: relative;
+    height: 201px;
+}*/
+
+.css-qri22k {
+    display: none;
+    color: rgba(49, 51, 63, 0.4);
+    flex: 0 1 0%;
+    font-size: 14px;
+    min-width: auto;
+    max-width: initial;
+    padding: 0.5rem 1rem;
+    width: 100%;
+
 }

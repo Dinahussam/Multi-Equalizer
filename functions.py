@@ -3,7 +3,7 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 from scipy.io.wavfile import read, write
 from IPython.display import Audio
-from numpy.fft import fft, ifft
+from numpy.fft import fft, ifft, rfft, rfftfreq
 import sounddevice as sd
 import librosa.display
 import librosa
@@ -13,6 +13,7 @@ import streamlit_vertical_slider as svs
 import streamlit as st
 import pandas as pd
 import altair as alt
+import time
 
 
 class Functions:
@@ -37,10 +38,11 @@ def upload(file_uploaded):
     if file_uploaded is not None:
         Functions.upload_store = file_uploaded
         Functions.samples, Functions.sampling_rate = librosa.load(Functions.upload_store, duration=20)
-        st.write(file_uploaded)
-        st.write(type(file_uploaded))
+        # st.write(file_uploaded)
+        # st.write(type(file_uploaded))
         Functions.time = np.array(range(0, len(Functions.samples))) / Functions.sampling_rate
-        Functions.time_after = Functions.time[:round(len(Functions.time) / 2)]
+        Functions.time_after = np.array(range(0, len(Functions.samples))) / (Functions.sampling_rate / 2)
+        Functions.time_after = Functions.time_after[:round((len(Functions.time_after) - 4) / 2)]
 
 
 # @staticmethod
@@ -90,7 +92,7 @@ def plot(x_axis, y_axis, name_x_axis, name_y_axis):
     #     ax.plot(xf, 2.0/n * np.abs(yf[:n//2]))
     #     plt.grid()
     #     plt.xlabel("Frequency")
-    #      plt.ylabel("Amplitude")
+    #     plt.ylabel("Amplitude")
     return fig.show()
 
 
@@ -111,9 +113,11 @@ def to_freq_domain(start, end, slider_factor):  # samples represent the audio
     Functions.n = len(Functions.samples)
     Functions.T = 1 / Functions.sampling_rate
 
-    Functions.y_axis_freq_domain = fft(Functions.samples)  # we should work on this
-    Functions.y_axis_freq_domain = Functions.y_axis_freq_domain[:round(len(Functions.y_axis_freq_domain) / 2)]
-    Functions.x_axis_freq_domain = np.linspace(0, int(1.0 / (2.0 * Functions.T)), int(Functions.n / 2))
+    Functions.y_axis_freq_domain = rfft(Functions.samples)  # we should work on this
+    Functions.y_axis_freq_domain = Functions.y_axis_freq_domain[:(len(Functions.y_axis_freq_domain) // 2)]
+
+    Functions.x_axis_freq_domain = np.fft.rfftfreq(Functions.n, Functions.sampling_rate)
+    Functions.x_axis_freq_domain = Functions.x_axis_freq_domain[:len(Functions.x_axis_freq_domain) // 2]
 
     # counter = 0
     # for value in x_axis_freq_domain:
@@ -121,8 +125,7 @@ def to_freq_domain(start, end, slider_factor):  # samples represent the audio
     #         y_axis_freq_domain[counter] *= factor
     #     counter += 1
 
-    Functions.y_axis_freq_domain[start:end] = Functions.y_axis_freq_domain[start:end] * Functions.factor
-    # f(x) = y = value = Amplitude
+    Functions.y_axis_freq_domain[start:end] *= Functions.factor  # f(x) = y = value = Amplitude
 
     # st.write(Functions.factor)
 
@@ -133,7 +136,7 @@ def to_freq_domain(start, end, slider_factor):  # samples represent the audio
 # @staticmethod
 def to_time_domain(y_axis_freqDomain):
     Functions.y_axis_time_domain_ndarray = np.array(Functions.y_axis_time_domain)
-    Functions.y_axis_time_domain_ndarray = np.fft.ifft(y_axis_freqDomain)
+    Functions.y_axis_time_domain_ndarray = np.fft.irfft(y_axis_freqDomain)/2
     return Functions.y_axis_time_domain_ndarray.real
 
 
@@ -141,99 +144,139 @@ def to_time_domain(y_axis_freqDomain):
 def clear():
     Functions.copy_y_axis_freq_domain = Functions.y_axis_freq_domain.copy()
 
+
 def plot_animation_beforeProcessing(df):
     # brush = alt.selection_interval()
     chart1 = alt.Chart(df).mark_line().encode(
-            x=alt.X('time', axis=alt.Axis(title='Time')),
-            # y=alt.Y('amplitude', axis=alt.Axis(title='Amplitude')),
-        ).properties(
-            width=500,
-            height=300
+            x=alt.X('time', axis=alt.Axis(title='Time'))).properties(
+            width=400,
+            height=200
         ) .interactive()
-        # .add_selection(
-        #     brush)
-        #     .interactive()
+    # y=alt.Y('amplitude', axis=alt.Axis(title='Amplitude')),
+    # .add_selection(brush).interactive()
     
-    figure = chart1.encode(
-                  y=alt.Y('amplitude',axis=alt.Axis(title='Amplitude'))) 
+    figure = chart1.encode(y=alt.Y('amplitude', axis=alt.Axis(title='Amplitude')))
                   
-            #       .add_selection(
-            # brush)
+    # .add_selection(brush)
 
     return figure
+
+
 def plot_animation_afterProcessing(df):
     # brush = alt.selection_interval()
-    chart1 = alt.Chart(df).mark_line().encode(
-            x=alt.X('time', axis=alt.Axis(title='Time')),
-            # y=alt.Y('amplitude', axis=alt.Axis(title='Amplitude')),
-        ).properties(
-            width=500,
-            height=300
+    chart1 = alt.Chart(df).mark_line().encode(x=alt.X('time', axis=alt.Axis(title='Time'))).properties(
+            width=400,
+            height=200
         ) .interactive()
-        # .add_selection(
-        #     brush)
-        #     .interactive()
+    # y=alt.Y('amplitude', axis=alt.Axis(title='Amplitude')),
+    # .add_selection(brush).interactive()
     
-    figure = chart1.encode(
-                   
-                  y=alt.Y('amplitude after processing',axis=alt.Axis(title='Amplitude after')))
-            #       .add_selection(
-            # brush)
+    figure = chart1.encode(y=alt.Y('amplitude after processing', axis=alt.Axis(title='Amplitude after')))
+    # .add_selection(brush)
 
     return figure
 
+    # plotShow(functions.Functions.samples,functions.Functions.)
 
-        # plotShow(functions.Functions.samples,functions.Functions.)
-# 
 
 # data signal after upload 
 # idata signal after inverse 
 
-def plotShow(data,idata):
-    st.write(len(Functions.time_after))
-    st.write(len(Functions.final_y_axis_time_domain))
-    time_afterUpload = np.linspace(0,2,len(data))
-    df_afterUpload = pd.DataFrame({'time': Functions.time[::500], 
-                      'amplitude': data[::500],
-                      }, columns=[
-                    'time', 'amplitude'])
-    # time_afterInversw = np.linspace(0,2,len(data))
-  
+def plotShow_before(data):
+    df_afterUpload = pd.DataFrame({'time': Functions.time[::500], 'amplitude': data[::500], }, columns=['time',
+                                                                                                        'amplitude'])
     lines_afterUpload = plot_animation_beforeProcessing(df_afterUpload)
-    
-    line_plot1 = st.altair_chart(lines_afterUpload)
-    N1= df_afterUpload.shape[0]  # number of elements in the dataframe
-    burst1 = 10      # number of elements (months) to add to the plot
-    size1 = burst1    #   size of the current dataset
-    
-    
-    for i in range(1, N1):
-            # st.session_state.start=i
-            # print(st.session_state.start)
-            step_df1 = df_afterUpload.iloc[0:size1]
-            lines_afterUpload = plot_animation_beforeProcessing(step_df1)
-            line_plot1 = line_plot1.altair_chart(lines_afterUpload)
-            size1 = i + burst1
-            st.session_state.size1 = size1
 
-    # lines_afterInverse = plot_animation(df_afterUpload)  
-    df_afterInverse = pd.DataFrame({'time': Functions.time_after[::250], 
-                      'amplitude after processing': idata[::250]}, columns=[
-                    'time' ,'amplitude after processing'])
-    lines_afterInverse = plot_animation_afterProcessing(df_afterInverse)  
-    line_plot2 = st.altair_chart(lines_afterInverse)  
-    N2= df_afterInverse.shape[0]  # number of elements in the dataframe
-    burst2 = 10      # number of elements (months) to add to the plot
-    size2 = burst2                
+    line_plot1 = st.altair_chart(lines_afterUpload)
+    N1 = df_afterUpload.shape[0]  # number of elements in the dataframe
+    burst1 = 10  # number of elements (months) to add to the plot
+    size1 = burst1  # size of the current dataset
+
+    for i in range(1, N1):
+        step_df1 = df_afterUpload.iloc[0:size1]
+        lines_afterUpload = plot_animation_beforeProcessing(step_df1)
+        line_plot1 = line_plot1.altair_chart(lines_afterUpload)
+        size1 = i + burst1
+        st.session_state.size1 = size1
+
+
+def plotShow_after(inverse_data):
+    # lines_afterInverse = plot_animation(df_afterUpload)
+    df_afterInverse = pd.DataFrame({'time': Functions.time_after[::250], 'amplitude after processing':
+                                    inverse_data[::250]}, columns=['time', 'amplitude after processing'])
+    lines_afterInverse = plot_animation_afterProcessing(df_afterInverse)
+    line_plot2 = st.altair_chart(lines_afterInverse)
+    N2 = df_afterInverse.shape[0]  # number of elements in the dataframe
+    burst2 = 10  # number of elements (months) to add to the plot
+    size2 = burst2
     for i in range(1, N2):
-            # st.session_state.start=i
-            # print(st.session_state.start)
-            step_df2 = df_afterInverse.iloc[0:size2]
-            lines_afterInverse = plot_animation_afterProcessing(step_df2)
-            line_plot2 = line_plot2.altair_chart(lines_afterInverse)
-            size2 = i + burst2
-            st.session_state.size2 = size2
-    Functions.time.sleep(.1)
+        # st.session_state.start=i
+        # print(st.session_state.start)
+        step_df2 = df_afterInverse.iloc[0:size2]
+        lines_afterInverse = plot_animation_afterProcessing(step_df2)
+        line_plot2 = line_plot2.altair_chart(lines_afterInverse)
+        size2 = i + burst2
+        st.session_state.size2 = size2
+    # time.sleep(.1)
+
+
+# Plot Spectrogram
+def plot_spectrogram(signal, sample_rate, y_axis="linear"):
+    FRAME_SIZE = 2048
+    HOP_SIZE = 512
+    S_scale = librosa.stft(signal, n_fft=FRAME_SIZE, hop_length=HOP_SIZE)
+    Y_scale = np.abs(S_scale) ** 2
+    Y_log_scale = librosa.power_to_db(Y_scale)
+    plt.figure(figsize=(6, 4))
+    librosa.display.specshow(Y_log_scale, sr=sample_rate, hop_length=512, x_axis="time", y_axis=y_axis)
+    plt.colorbar(format="%+2.f")
+    st.set_option('deprecation.showPyplotGlobalUse', False)
+    st.pyplot(clear_figure=False)
+
+
+# def plotShow(data, idata):
+#     # st.write(len(Functions.time_after))
+#     # st.write(len(Functions.final_y_axis_time_domain))
+#     time_afterUpload = np.linspace(0, 2, len(data))
+#     df_afterUpload = pd.DataFrame({'time': Functions.time[::500], 'amplitude': data[::500], }, columns=['time',
+#                                                                                                         'amplitude'])
+#     # time_afterInversw = np.linspace(0,2,len(data))
+#
+#     lines_afterUpload = plot_animation_beforeProcessing(df_afterUpload)
+#
+#     line_plot1 = st.altair_chart(lines_afterUpload)
+#     N1 = df_afterUpload.shape[0]  # number of elements in the dataframe
+#     burst1 = 10      # number of elements (months) to add to the plot
+#     size1 = burst1    # size of the current dataset
+#
+#     for i in range(1, N1):
+#         # st.session_state.start=i
+#         # print(st.session_state.start)
+#         step_df1 = df_afterUpload.iloc[0:size1]
+#         lines_afterUpload = plot_animation_beforeProcessing(step_df1)
+#         line_plot1 = line_plot1.altair_chart(lines_afterUpload)
+#         size1 = i + burst1
+#         st.session_state.size1 = size1
+#   # ##################################################################################################################
+#     # lines_afterInverse = plot_animation(df_afterUpload)
+#     df_afterInverse = pd.DataFrame({'time': Functions.time_after[::250], 'amplitude after processing': idata[::250]},
+#                                    columns=['time', 'amplitude after processing'])
+#     lines_afterInverse = plot_animation_afterProcessing(df_afterInverse)
+#     line_plot2 = st.altair_chart(lines_afterInverse)
+#     N2 = df_afterInverse.shape[0]  # number of elements in the dataframe
+#     burst2 = 10      # number of elements (months) to add to the plot
+#     size2 = burst2
+#     for i in range(1, N2):
+#         # st.session_state.start=i
+#         # print(st.session_state.start)
+#         step_df2 = df_afterInverse.iloc[0:size2]
+#         lines_afterInverse = plot_animation_afterProcessing(step_df2)
+#         line_plot2 = line_plot2.altair_chart(lines_afterInverse)
+#         size2 = i + burst2
+#         st.session_state.size2 = size2
+#     time.sleep(.1)
+
+# ###################################
     # elif resume_btn: 
     #         print(st.session_state.start)
     #         for i in range( st.session_state.start,N):

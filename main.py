@@ -30,7 +30,7 @@ st.set_page_config(
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # styles from css file
-with open(r"C:\Users\Function\Desktop\DSP_Task2-main\DSP_Task2-main\style.css") as design:
+with open("style.css") as design:
     st.markdown(f"<style>{design.read()}</style>", unsafe_allow_html=True)
 
 # Lists
@@ -98,12 +98,12 @@ with st.sidebar:
             slider = slider or 0
             sliders_value.append(slider)
             # st.write(type(sliders_value[i]))
-            # st.write(sliders_value[i])
-
+    Apply_Changes=st.sidebar.button("Apply Changes")
+        # st.write(sliders_value[i])
     if functions.Functions.upload_store:
         st.write("#### Audio before:")
         st.audio(functions.Functions.upload_store)
-
+        
 # Side bar end
 # TypeError: int() argument must be a string, a bytes-like object or a number, not 'NoneType'
 
@@ -134,12 +134,9 @@ if signal == 'Frequency':
         # col_before.plotly_chart(fig_layout_wav)
 
         y_axis_after = functions.slider_change(0, 4000, 0, mode)
-        with col_before:
-            functions.plotShow_before(functions.Functions.samples)
-
-        with col_after:
-            functions.plotShow_after(functions.Functions.final_y_axis_time_domain)
-
+        # with col_before:
+        functions.show_plot(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
+            
 
         # col_before, col_after = functions.plotShow(functions.Functions.samples, functions.Functions.final_y_axis_time_domain)
 
@@ -156,16 +153,17 @@ if signal == 'Frequency':
 
         # y_ax = functions.y_axis_time_domain_ndarray
 
-        after_fig = px.line(x=functions.Functions.time_after, y=y_axis_after)
-        fig_layout_after = functions.layout_fig(after_fig)
+        # after_fig = px.line(x=functions.Functions.time_after, y=y_axis_after)
+        # fig_layout_after = functions.layout_fig(after_fig)
         # col_after.plotly_chart(fig_layout_after)
-
-        Show_spectrogram = st.checkbox('Show spectrogram', value=False)
-        if Show_spectrogram:
-            with col_before:
+        # Show_spectrogram = st.checkbox('Show spectrogram', value=False)
+        # if Show_spectrogram:
+        with col_before:
                 functions.plot_spectrogram(functions.Functions.samples, functions.Functions.sampling_rate)
-            with col_after:
-                functions.plot_spectrogram(functions.Functions.final_y_axis_time_domain, (functions.Functions.sampling_rate/2))
+        # if Apply_Changes:
+        with col_after:
+                    # functions.plotShow_after(functions.Functions.final_y_axis_time_domain)
+                    functions.plot_spectrogram(functions.Functions.final_y_axis_time_domain, (functions.Functions.sampling_rate/2))
 
 if signal == 'Vowels':
     mode = signal_mode[1]
@@ -177,14 +175,27 @@ if signal == 'Vowels':
             index += 1
 
     if functions.Functions.upload_store:
-        wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
-        fig_layout = functions.layout_fig(wav_fig)
-        col_before.plotly_chart(fig_layout)
-        col_after.plotly_chart(fig_layout)
-        Show_spectrogram = st.checkbox('Show spectrogram', value=False)
-        if Show_spectrogram:
-            col_after.plotly_chart(fig_layout)
-            col_before.plotly_chart(fig_layout)
+        #             functions.plotShow_before(functions.Functions.samples)
+
+        # # wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
+        # # fig_layout = functions.layout_fig(wav_fig)
+        # # col_before.plotly_chart(fig_layout)
+        # # col_after.plotly_chart(fig_layout)
+        # if Apply_Changes:
+        #     col_after.plotly_chart(fig_layout)
+        #     col_before.plotly_chart(fig_layout)
+        y_axis_after = functions.slider_change(0, 4000, 0, mode)
+        functions.show_plot(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
+
+        with col_before:
+            functions.plotShow_before(functions.Functions.samples)
+            
+        # with col_before:
+        #         functions.plot_spectrogram(functions.Functions.samples, functions.Functions.sampling_rate)
+        # if Apply_Changes:
+        with col_after:
+                    # functions.plotShow_after(functions.Functions.final_y_axis_time_domain)
+                    functions.plot_spectrogram(functions.Functions.final_y_axis_time_domain, (functions.Functions.sampling_rate/2)) 
 # #########################################################################
 if signal == 'Music Instrumentation':
     mode = signal_mode[2]
@@ -196,14 +207,26 @@ if signal == 'Music Instrumentation':
             index += 1
 
     if functions.Functions.upload_store:
-        wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
-        fig_layout = functions.layout_fig(wav_fig)
-        col_before.plotly_chart(fig_layout)
-        col_after.plotly_chart(fig_layout)
-        Show_spectrogram = st.checkbox('Show spectrogram', value=False)
-        if Show_spectrogram:
-            col_after.plotly_chart(fig_layout)
-            col_before.plotly_chart(fig_layout)
+        # wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
+        # fig_layout = functions.layout_fig(wav_fig)
+        # col_before.plotly_chart(fig_layout)
+        # col_after.plotly_chart(fig_layout)
+        # Show_spectrogram = st.checkbox('Show spectrogram', value=False)
+        # if Show_spectrogram:
+        #     col_after.plotly_chart(fig_layout)
+        y_axis_after = functions.slider_change(0, 4000, 0, mode)
+        functions.show_plot(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
+
+        # with col_before:
+            # functions.plotShow_before(functions.Functions.samples)
+            
+        with col_before:
+                functions.plot_spectrogram(functions.Functions.samples, functions.Functions.sampling_rate)
+        # if Apply_Changes:
+        with col_after:
+                    # functions.plotShow_after(functions.Functions.final_y_axis_time_domain)
+                    functions.plot_spectrogram(functions.Functions.final_y_axis_time_domain, (functions.Functions.sampling_rate/2))    #     col_before.plotly_chart(fig_layout)
+        
 # ##########################################################################
 if signal == 'Medical Instrumentation':
     mode = signal_mode[3]
@@ -215,14 +238,26 @@ if signal == 'Medical Instrumentation':
             index += 1
 
     if functions.Functions.upload_store:
-        wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
-        fig_layout = functions.layout_fig(wav_fig)
-        col_before.plotly_chart(fig_layout)
-        col_after.plotly_chart(fig_layout)
-        Show_spectrogram = st.checkbox('Show spectrogram', value=False)
-        if Show_spectrogram:
-            col_after.plotly_chart(fig_layout)
-            col_before.plotly_chart(fig_layout)
+    #     wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
+    #     fig_layout = functions.layout_fig(wav_fig)
+    #     col_before.plotly_chart(fig_layout)
+    #     col_after.plotly_chart(fig_layout)
+    #     Show_spectrogram = st.checkbox('Show spectrogram', value=False)
+    #     if Show_spectrogram:
+    #         col_after.plotly_chart(fig_layout)
+    #         col_before.plotly_chart(fig_layout)
+        y_axis_after = functions.slider_change(0, 4000, 0, mode)
+        functions.show_plot(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
+
+        with col_before:
+            # functions.plotShow_before(functions.Functions.samples)
+            
+        # with col_before:
+                functions.plot_spectrogram(functions.Functions.samples, functions.Functions.sampling_rate)
+        # if Apply_Changes:
+        with col_after:
+                    # functions.plotShow_after(functions.Functions.final_y_axis_time_domain)
+                    functions.plot_spectrogram(functions.Functions.final_y_axis_time_domain, (functions.Functions.sampling_rate/2)) 
 # ##########################################################################
 if signal == 'Bitch':
     mode = signal_mode[4]
@@ -234,14 +269,25 @@ if signal == 'Bitch':
             index += 1
 
     if functions.Functions.upload_store:
-        wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
-        fig_layout = functions.layout_fig(wav_fig)
-        col_before.plotly_chart(fig_layout)
-        col_after.plotly_chart(fig_layout)
-        Show_spectrogram = st.checkbox('Show spectrogram', value=False)
-        if Show_spectrogram:
-            col_after.plotly_chart(fig_layout)
-            col_before.plotly_chart(fig_layout)
+        # wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
+        # fig_layout = functions.layout_fig(wav_fig)
+        # col_before.plotly_chart(fig_layout)
+        # col_after.plotly_chart(fig_layout)
+        # Show_spectrogram = st.checkbox('Show spectrogram', value=False)
+        # if Show_spectrogram:
+        #     col_after.plotly_chart(fig_layout)
+        #     col_before.plotly_chart(fig_layout)
+        y_axis_after = functions.slider_change(0, 4000, 0, mode)
+        functions.show_plot(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
+        with col_before:
+        #     functions.plotShow_before(functions.Functions.samples)
+            
+        # with col_before:
+         functions.plot_spectrogram(functions.Functions.samples, functions.Functions.sampling_rate)
+        # if Apply_Changes:
+        with col_after:
+        #             functions.plotShow_after(functions.Functions.final_y_axis_time_domain)
+         functions.plot_spectrogram(functions.Functions.final_y_axis_time_domain, (functions.Functions.sampling_rate/2)) 
 
 with st.sidebar:
     if functions.Functions.upload_store:

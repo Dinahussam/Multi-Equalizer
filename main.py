@@ -1,298 +1,106 @@
-import functions
+import my_fun
 import streamlit as st
-import plotly.express as px
 import pandas as pd
-import streamlit_vertical_slider as svs
-import wave
-import struct
-from librosa import display
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.io.wavfile import read, write
-from IPython.display import Audio
-from numpy.fft import fft, ifft
-import sounddevice as sd
-import librosa.display
-import librosa
-from scipy.fft import fft, fftfreq
-import plotly.graph_objects as go
-import altair as alt
+import soundfile as sf
 
-
-# general styling and tab name
+########################### Styling #######################################
 st.set_page_config(
     page_title="Equalizer",
     page_icon="✅",
     layout="wide",
 )
 
-# For any warning
-st.set_option('deprecation.showPyplotGlobalUse', False)
-
-# styles from css file
 with open("style.css") as design:
     st.markdown(f"<style>{design.read()}</style>", unsafe_allow_html=True)
+    st.set_option('deprecation.showPyplotGlobalUse', False)
 
-# Lists
-sliders_value = []
-signal_mode = ['frequency', 'vowels', 'music', 'medical', 'bitch']
+########################### Sidebar #######################################
 
-# Dictionaries
-frequencies_slider = {
-    "0:100": [0, 100],  # [start, end]
-    "100:200": [100, 200],
-    "200:500": [200, 500],
-    "500:1000": [500, 1000],
-    "1000:4000": [1000, 4000],
-}
-
-vowels_sliders = {
-    "L": [200, 400],
-    "B": [100, 200],
-    "M": [500, 1000],
-    "K": [10, 100],
-    "O": [1000, 4000],
-}
-
-music_sliders = {
-    "piano1": [200, 400],
-    "piano2": [100, 200],
-    "piano3": [500, 1000],
-    "piano4": [10, 100],
-    "piano5": [1000, 4000],
-}
-
-medical_sliders = {
-    "arrhythmia1": [200],
-    "arrhythmia2": [100],
-    "arrhythmia3": [1964],
-    "arrhythmia4": [8],
-    "arrhythmia5": [50],
-}
-
-bitch_sliders = {
-    "bitch1": [200],
-    "bitch2": [100],
-    "bitch3": [1964],
-    "bitch4": [8],
-    "bitch5": [50],
-}
-
-
-signal = st.radio("", ('Frequency', 'Vowels', 'Music Instrumentation', 'Medical Instrumentation', 'Bitch'))
-
-# sidebar components
 with st.sidebar:
-    # title
     st.write("# Equalizer")
+    file_uploaded = st.file_uploader("", accept_multiple_files=False)
+    st.write("## Choose the mode ")
+    Mode = st.selectbox(label="", options=[
+                        'Frequency', 'Vowels', 'Music Instrument', 'Medical', 'Pitch Shift'])
 
-    file_uploaded = st.file_uploader("", type='wav', accept_multiple_files=False)
-    functions.upload(file_uploaded)
-
-    # 5 Sliders
-    col = st.columns([0.5, 0.5, 0.5, 0.5, 0.5])
-    # slider = 0
-    for i in range(0, 5, 1):
-        with col[i]:
-            slider = functions.verticalSlider(i, 0, 100)
-            slider = slider or 0
-            sliders_value.append(slider)
-            # st.write(type(sliders_value[i]))
-    Apply_Changes=st.sidebar.button("Apply Changes")
-        # st.write(sliders_value[i])
-    if functions.Functions.upload_store:
-        st.write("#### Audio before:")
-        st.audio(functions.Functions.upload_store)
-        
-# Side bar end
-# TypeError: int() argument must be a string, a bytes-like object or a number, not 'NoneType'
+    # print (file_uploaded.type )
 
 
-col_before, col_after = st.columns([2, 2])
+########################### Main #######################################
 
-with col_before:
-    col_before.write("#### Before")
+def main():
+    st.session_state.size1=0
+    st.session_state.flag=0
+    st.session_state.i=0
+    st.session_state.start=0
+    if file_uploaded:
+        if file_uploaded.type == "audio/wav":
 
-with col_after:
-    col_after.write("#### After")
+            magnitude_at_time, sample_rate = my_fun.to_librosa(file_uploaded)
+            Data_frame_of_medical = pd.DataFrame()
+            pitch_step = 0
+            spectogram = st.sidebar.checkbox(label="Spectogram")
+
+            st.session_state.show_spec = 0
+            st.sidebar.write("## Audio before")
+            st.sidebar.audio(file_uploaded.name)
+            if spectogram:
+                st.session_state.show_spec = 1
+            else:
+                st.session_state.show_spec = 0
+#_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Modes Function_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _#
+
+            if Mode == 'Frequency':
+                dictnoary_values = {"0:1000": [0, 1000],
+                                    "1000:2000": [1000, 2000],
+                                    "3000:4000": [3000, 4000],
+                                    "4000:5000": [4000, 5000],
+                                    "5000:6000": [5000, 6000],
+                                    "6000:7000": [6000, 7000],
+                                    "7000:8000": [7000, 8000],
+                                    "8000:9000": [8000, 9000],
+                                    "9000:10000": [9000, 10000]
+                                    }
+                values_slider = [[0, 10, 1]]*len(list(dictnoary_values.keys()))
+
+            elif Mode == 'Vowels':
+                dictnoary_values = {"h": [1900, 5000],
+                                    "R": [1500, 3000],
+                                    "O": [500, 2000],
+                                    "Y": [490, 2800]
+                                    }
+                values_slider = [[0, 10, 1]]*len(list(dictnoary_values.keys()))
+
+            elif Mode == 'Music Instrument':
+                dictnoary_values = {"Drum ": [0, 500],
+                                    "Flute": [500, 1000],
+                                    "Key": [1000, 2000],
+                                    "Piano": [2000, 5000]
+                                    }
+                values_slider = [[0, 10, 1]]*len(list(dictnoary_values.keys()))
+
+            elif Mode == 'Pitch Shift':
+                dictnoary_values = {"Pitch Step": [0, 0]}
+                values_slider = [[-12, 12, 1]]
+                pitch_step = st.slider(label="Pitch Shift",
+                                       max_value=12, min_value=-12, step=1, value=5)
+
+            my_fun.processing(Mode, list(dictnoary_values.keys()), values_slider, magnitude_at_time,
+                              sample_rate, st.session_state.show_spec, dictnoary_values, pitch_step)
+
+        elif file_uploaded.type == "text/csv":
+            if Mode == 'Medical':
+                dictnoary_values = {"arrythmia 1": [0, 0],
+                                    "arrythmia 2": [0, 0],
+                                    "arrythmia 3": [0, 0],
+                                    }
+                values_slider = [[0.0, 2.0, 1]] * \
+                    len(list(dictnoary_values.keys()))
+                Data_frame_of_medical = pd.read_csv(file_uploaded)
+                slider = my_fun.generate_slider(
+                    list(dictnoary_values.keys()), values_slider, 0.1)
+                my_fun.modifiy_medical_signal(Data_frame_of_medical, slider)
 
 
-if signal == 'Frequency':
-    mode = signal_mode[0]
-    index = 0
-    for freq_label in frequencies_slider:
-        with col[index]:
-            st.write(freq_label)
-            index += 1
-    if functions.Functions.upload_store:
-        # functions.plotShow(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
-
-        # if functions.Functions.upload_store:,functions.Functions.final_y_axis_time_domain
-        # wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
-
-        # fig_layout_wav = functions.layout_fig(wav_fig)
-        # col_before.plotly_chart(fig_layout_wav)
-
-        y_axis_after = functions.slider_change(0, 4000, 0, mode)
-        # with col_before:
-        functions.show_plot(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
-            
-
-        # col_before, col_after = functions.plotShow(functions.Functions.samples, functions.Functions.final_y_axis_time_domain)
-
-        # y_axis_after = functions.slider_change(frequencies_slider["0:100"][0], frequencies_slider["0:100"][1],
-        #                                        sliders_value[0], mode)
-        # y_axis_after += functions.slider_change(frequencies_slider["100:200"][0], frequencies_slider["100:200"][1],
-        #                                         sliders_value[1], mode)
-        # y_axis_after += functions.slider_change(frequencies_slider["200:500"][0], frequencies_slider["200:500"][1],
-        #                                         sliders_value[2], mode)
-        # y_axis_after += functions.slider_change(frequencies_slider["500:1000"][0], frequencies_slider["500:1000"][1],
-        #                                         sliders_value[3], mode)
-        # y_axis_after += functions.slider_change(frequencies_slider["1000:4000"][0], frequencies_slider["1000:4000"][1]
-        #                                         ,sliders_value[4], mode)
-
-        # y_ax = functions.y_axis_time_domain_ndarray
-
-        # after_fig = px.line(x=functions.Functions.time_after, y=y_axis_after)
-        # fig_layout_after = functions.layout_fig(after_fig)
-        # col_after.plotly_chart(fig_layout_after)
-        # Show_spectrogram = st.checkbox('Show spectrogram', value=False)
-        # if Show_spectrogram:
-        with col_before:
-                functions.plot_spectrogram(functions.Functions.samples, functions.Functions.sampling_rate)
-        # if Apply_Changes:
-        with col_after:
-                    # functions.plotShow_after(functions.Functions.final_y_axis_time_domain)
-                    functions.plot_spectrogram(functions.Functions.final_y_axis_time_domain, (functions.Functions.sampling_rate/2))
-
-if signal == 'Vowels':
-    mode = signal_mode[1]
-
-    index = 0
-    for vowels_label in vowels_sliders:
-        with col[index]:
-            st.write(vowels_label)
-            index += 1
-
-    if functions.Functions.upload_store:
-        #             functions.plotShow_before(functions.Functions.samples)
-
-        # # wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
-        # # fig_layout = functions.layout_fig(wav_fig)
-        # # col_before.plotly_chart(fig_layout)
-        # # col_after.plotly_chart(fig_layout)
-        # if Apply_Changes:
-        #     col_after.plotly_chart(fig_layout)
-        #     col_before.plotly_chart(fig_layout)
-        y_axis_after = functions.slider_change(0, 4000, 0, mode)
-        functions.show_plot(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
-
-        with col_before:
-            functions.plotShow_before(functions.Functions.samples)
-            
-        # with col_before:
-        #         functions.plot_spectrogram(functions.Functions.samples, functions.Functions.sampling_rate)
-        # if Apply_Changes:
-        with col_after:
-                    # functions.plotShow_after(functions.Functions.final_y_axis_time_domain)
-                    functions.plot_spectrogram(functions.Functions.final_y_axis_time_domain, (functions.Functions.sampling_rate/2)) 
-# #########################################################################
-if signal == 'Music Instrumentation':
-    mode = signal_mode[2]
-
-    index = 0
-    for music_label in music_sliders:
-        with col[index]:
-            st.write(music_label)
-            index += 1
-
-    if functions.Functions.upload_store:
-        # wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
-        # fig_layout = functions.layout_fig(wav_fig)
-        # col_before.plotly_chart(fig_layout)
-        # col_after.plotly_chart(fig_layout)
-        # Show_spectrogram = st.checkbox('Show spectrogram', value=False)
-        # if Show_spectrogram:
-        #     col_after.plotly_chart(fig_layout)
-        y_axis_after = functions.slider_change(0, 4000, 0, mode)
-        functions.show_plot(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
-
-        # with col_before:
-            # functions.plotShow_before(functions.Functions.samples)
-            
-        with col_before:
-                functions.plot_spectrogram(functions.Functions.samples, functions.Functions.sampling_rate)
-        # if Apply_Changes:
-        with col_after:
-                    # functions.plotShow_after(functions.Functions.final_y_axis_time_domain)
-                    functions.plot_spectrogram(functions.Functions.final_y_axis_time_domain, (functions.Functions.sampling_rate/2))    #     col_before.plotly_chart(fig_layout)
-        
-# ##########################################################################
-if signal == 'Medical Instrumentation':
-    mode = signal_mode[3]
-
-    index = 0
-    for medical_label in medical_sliders:
-        with col[index]:
-            st.write(medical_label)
-            index += 1
-
-    if functions.Functions.upload_store:
-    #     wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
-    #     fig_layout = functions.layout_fig(wav_fig)
-    #     col_before.plotly_chart(fig_layout)
-    #     col_after.plotly_chart(fig_layout)
-    #     Show_spectrogram = st.checkbox('Show spectrogram', value=False)
-    #     if Show_spectrogram:
-    #         col_after.plotly_chart(fig_layout)
-    #         col_before.plotly_chart(fig_layout)
-        y_axis_after = functions.slider_change(0, 4000, 0, mode)
-        functions.show_plot(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
-
-        with col_before:
-            # functions.plotShow_before(functions.Functions.samples)
-            
-        # with col_before:
-                functions.plot_spectrogram(functions.Functions.samples, functions.Functions.sampling_rate)
-        # if Apply_Changes:
-        with col_after:
-                    # functions.plotShow_after(functions.Functions.final_y_axis_time_domain)
-                    functions.plot_spectrogram(functions.Functions.final_y_axis_time_domain, (functions.Functions.sampling_rate/2)) 
-# ##########################################################################
-if signal == 'Bitch':
-    mode = signal_mode[4]
-
-    index = 0
-    for bitch_label in bitch_sliders:
-        with col[index]:
-            st.write(bitch_label)
-            index += 1
-
-    if functions.Functions.upload_store:
-        # wav_fig = px.line(x=functions.Functions.time, y=functions.Functions.samples)
-        # fig_layout = functions.layout_fig(wav_fig)
-        # col_before.plotly_chart(fig_layout)
-        # col_after.plotly_chart(fig_layout)
-        # Show_spectrogram = st.checkbox('Show spectrogram', value=False)
-        # if Show_spectrogram:
-        #     col_after.plotly_chart(fig_layout)
-        #     col_before.plotly_chart(fig_layout)
-        y_axis_after = functions.slider_change(0, 4000, 0, mode)
-        functions.show_plot(functions.Functions.samples,functions.Functions.final_y_axis_time_domain)
-        with col_before:
-        #     functions.plotShow_before(functions.Functions.samples)
-            
-        # with col_before:
-         functions.plot_spectrogram(functions.Functions.samples, functions.Functions.sampling_rate)
-        # if Apply_Changes:
-        with col_after:
-        #             functions.plotShow_after(functions.Functions.final_y_axis_time_domain)
-         functions.plot_spectrogram(functions.Functions.final_y_axis_time_domain, (functions.Functions.sampling_rate/2)) 
-
-with st.sidebar:
-    if functions.Functions.upload_store:
-        st.write("#### Audio after:")
-        norm = np.int16(
-            functions.Functions.final_y_axis_time_domain * (32767 / functions.Functions.final_y_axis_time_domain.max()))
-        write('Edited_audio.wav', round(functions.Functions.sampling_rate), norm)
-        st.audio('Edited_audio.wav', format='audio/wav')
+if __name__ == "__main__":
+    main()

@@ -1,20 +1,15 @@
 import numpy as np
-import plotly.express as px
 import matplotlib.pyplot as plt
-from scipy.io.wavfile import read, write
-from IPython.display import Audio
-from numpy.fft import fft, ifft, rfft, rfftfreq, irfft
-import sounddevice as sd
+from numpy.fft import rfft, rfftfreq, irfft
 import librosa.display
 import librosa
-from scipy.fft import fft, fftfreq
 import plotly.graph_objects as go
 import streamlit_vertical_slider as svs
 import streamlit as st
 import pandas as pd
 import altair as alt
-import time
 import soundfile as sf
+import time
 
 #_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ upload Function_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _#
 
@@ -33,12 +28,13 @@ def to_librosa(file_uploaded):
         sr : sampling rate      
     """
     if file_uploaded is not None:
-        samples, sr = librosa.load(file_uploaded)
-        return samples, sr
-    
+        y, sr = librosa.load(file_uploaded)
+        return y, sr
+
 #_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Generate Sliders Function_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _#
 
-def generate_slider(arr_names, arr_values , n=1):
+
+def generate_slider(arr_names, arr_values, n=1):
     """
         Function to generate slider 
 
@@ -53,7 +49,7 @@ def generate_slider(arr_names, arr_values , n=1):
         slider_values     
     """
     slider_values = []
-    # number of columns for styling = number of label
+    # with st.sidebar :
     col = st.columns(len(arr_names))
     for i in range(len(arr_names)):
         with col[i]:
@@ -66,6 +62,7 @@ def generate_slider(arr_names, arr_values , n=1):
     return slider_values
 
 #_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Fourier Transform Function_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _#
+
 
 def fourier_transform(audio_file, sample_rate):
     """
@@ -81,23 +78,27 @@ def fourier_transform(audio_file, sample_rate):
         magnitude 
         frequency     
     """
-    number_of_samples = len(audio_file)
-    T = 1 / sample_rate # period
+    number_samples = len(audio_file)
+    T = 1 / sample_rate
     magnitude = rfft(audio_file)
-    frequency = rfftfreq(number_of_samples, T)
+    frequency = rfftfreq(number_samples, T)
+
     return magnitude, frequency
 
 
 #_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Modification of signals Function_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _#
 
-def modifiy_general_signal(magnitude_freq, sliders_value):
+def modifiy_general_signal(name, magnitude_freq, frequency_freq_domain, sliders_value, ranges):
     """
-        Function to apply changes in frequency 
+        Function to apply changes in frequency / musical instrumntation  / vowels
 
         Parameters
         ----------
-        magnitude_freq : magnitude in frequency domain which you want to change it.
-        sliders_value  : value to select the range of frequency to change magnitude.
+        name                  : mode -> freq / music or vowels
+        magnitude_freq        : magnitude in frequency domain which you want to change it.
+        frequency_freq_domain : frequency after apply fourier transform
+        sliders_value         : value to select the range of frequency to change magnitude.
+        ranges                : ranges of sliders
 
         Return
         ----------
@@ -106,46 +107,14 @@ def modifiy_general_signal(magnitude_freq, sliders_value):
     for i in range(len(sliders_value)):
         if sliders_value[i] == None:
             sliders_value[i] = 1
-    magnitude_band = int(len(magnitude_freq)/10)
+
     for i in range(len(sliders_value)):
-        magnitude_freq[magnitude_band *i:magnitude_band*(i+1)]*= sliders_value[i]
-    
+        counter = 0
+        for value in frequency_freq_domain:
+            if value > ranges[name[i]][0] and value < ranges[name[i]][1]:
+                magnitude_freq[counter] *= sliders_value[i]
+            counter += 1
     return magnitude_freq
-
-
-def modifiy_music_signal(magnitude_freq, freqency, sliders_value):
-    """
-        Function to apply changes in musical instrument 
-
-        Parameters
-        ----------
-        magnitude_freq : magnitude of the frequency which you want to be changed
-        frequency      : frequency to be changed
-        sliders_value  : value to be changed on the frequency
-
-        Return
-        ----------
-        magintude_freq : magnitude after apply changes 
-             
-    """
-     
-    for i in range(len(sliders_value)):
-        if sliders_value[i] == None:
-            sliders_value[i] = 1
-# looping on the frequency values to multiply the slider values to the frequency of each musical instrument
-    counter=0
-    for value in freqency :
-        if value > 0 and value < 500:
-            magnitude_freq[counter] *= sliders_value[0]
-        elif value > 500 and value < 1000:
-            magnitude_freq[counter] *= sliders_value[1]
-        elif value > 1000 and value < 2000:
-            magnitude_freq[counter] *= sliders_value[2]
-        elif value > 2000 and value < 5000:
-            magnitude_freq[counter] *= sliders_value[3]
-        counter+=1
-    return magnitude_freq
-
 
 
 def modifiy_medical_signal(Ecg_file, sliders_value):
@@ -172,13 +141,13 @@ def modifiy_medical_signal(Ecg_file, sliders_value):
     fig1.update_yaxes(
         title_text="Amplitude(mv)",
         title_font={"size": 20},
-    # label
-    title_standoff=25)
-    
+        # label
+        title_standoff=25)
+
     for i in range(len(sliders_value)):
         if sliders_value[i] == None:
             sliders_value[i] = 1
-    
+
     time = Ecg_file.iloc[:, 0]
     magnitude = Ecg_file.iloc[:, 1]
     sample_period = time[1]-time[0]
@@ -195,7 +164,7 @@ def modifiy_medical_signal(Ecg_file, sliders_value):
             fourier[counter] *= (sliders_value[2])
         counter += 1
         time_domain_amplitude = np.real(irfft(fourier))
-    
+
     fig_sig = fig1.add_scatter(x=time, y=time_domain_amplitude)
     st.plotly_chart(fig_sig, use_container_width=True)
     return time_domain_amplitude
@@ -216,49 +185,88 @@ def modifiy_Pitch_signal(sample, sample_rate, sliders_value):
         ----------
         magintude_freq : magnitude after apply changes 
              
-    """
-   
-    # for i in range(len(sliders_value)):
+    """    
     if sliders_value == None:
         sliders_value = 5
     Pitched_amplitude = librosa.effects.pitch_shift(
         y=sample, sr=sample_rate, n_steps=sliders_value)
     return Pitched_amplitude
 
-def modifiy_vowels_signal(magnitude_freq, freqency, sliders_value):
+
+def processing(mode, names, values_slider, magnitude_at_time, sample_rate, show_spec, ranges, pitch_step):
     """
-        Function to apply changes in vowels 
+        Function to do processing and show spectrogram
 
         Parameters
         ----------
-        Ecg_file       : CSV file of ECG 
-        sliders_value  : value to be changed on the frequency
+        mode                  : mode -> freq / music / medical or vowels
+        names                 : label of sliders
+        magnitude_at_time     : magnitude at time domain
+        sample_rate           : sample rate after upload by librosa
+        show_spec             : session state of spectrogram
+        sliders_value         : value to select the range of frequency to change magnitude.
+        ranges                : ranges of sliders
+        
+        Return
+        ----------
+        magintude_freq : magnitude after apply changes.
+    """
+
+    if mode == 'Frequency' or 'Vowels' or 'Music Instrument':
+        # 4 cols for 4 sliders
+        col1, col2 = st.columns(2)
+        col3, col4 = st.columns(2)
+        slider = generate_slider(names, values_slider)
+
+        magnitude_freq_domain, frequency_freq_domain = fourier_transform(
+            magnitude_at_time, sample_rate)
+
+        magnitude_after_modifiy = modifiy_general_signal(
+            names, magnitude_freq_domain, frequency_freq_domain, slider, ranges)
+            
+        magnitude_time_after_inverse = Inverse_fourier_transform(
+            magnitude_after_modifiy)
+
+    elif mode == 'Pitch Shift':
+        magnitude_time_after_inverse = modifiy_Pitch_signal(
+            magnitude_at_time, sample_rate, pitch_step)
+
+    audio_after_show(magnitude_time_after_inverse, sample_rate)
+    with col1:
+        # draw the original and modified time domain signal
+        show_plot(magnitude_at_time,
+                  magnitude_time_after_inverse, sample_rate)
+    if show_spec == 1:
+        # spectogram plotting
+        with col3:
+            st.pyplot(spectogram(
+                magnitude_at_time, "Before"))
+        with col4:
+            st.pyplot(spectogram(
+                magnitude_time_after_inverse, "After"))
+
+
+#_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Audio show Function_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _#
+
+
+def audio_after_show(magnitude_time_after_inverse, sample_rate):
+    """
+        Function to display audio after apply changes
+
+        Parameters
+        ----------
+        magnitude_time_after_inverse : magnitude in time domain after inverse fourier 
+        sample rate  
 
         Return
         ----------
-        magintude_freq : magnitude after apply changes 
-             
-    """
-    for i in range(len(sliders_value)):
-        if sliders_value[i] == None:
-            sliders_value[i] = 1
-# looping on the frequency values to multiply the slider values to the frequency of each musical instrument
-    counter = 0
-    for value in freqency:
-        if value > 1900 and value < 5000:
-            magnitude_freq[counter] *= sliders_value[0]
-        if value > 1500 and value < 3000:
-            magnitude_freq[counter] *= sliders_value[1]
-        if value > 500 and value < 2000:
-            magnitude_freq[counter] *= sliders_value[2]
-        range1 = value > 100 and value < 1400
-        range2 = value > 2000 and value < 6000
-        if range1 or range2:
-            magnitude_freq[counter] *= sliders_value[4]
-        if value > 490 and value < 2800:
-            magnitude_freq[counter] *= sliders_value[3]
-        counter += 1
-    return magnitude_freq
+        none            
+    """    
+    st.sidebar.write("## Audio after")
+    sf.write("output.wav", magnitude_time_after_inverse, sample_rate)
+    st.sidebar.audio("output.wav")
+
+
 #_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Inverse Fourier Transform Function_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _#
 
 def Inverse_fourier_transform(magnitude_freq_domain):
@@ -278,6 +286,8 @@ def Inverse_fourier_transform(magnitude_freq_domain):
     return np.real(magnitude_time_domain)
 
 #_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Animation Function_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _#
+
+
 def plot_animation(df):
     """
         Function to make the signal animated
@@ -290,26 +300,51 @@ def plot_animation(df):
         ----------
         figure             
     """ 
-    # brush          -> for zooming 
-    #.interactive()  -> to able zooming
-    brush = alt.selection_interval() 
+    brush = alt.selection_interval()
     chart1 = alt.Chart(df).mark_line().encode(
-            x=alt.X('time', axis=alt.Axis(title='Time')),
-        ).properties(
-            width=400,
-            height=100
-        ).add_selection(
-            brush).interactive()
-    
+        x=alt.X('time', axis=alt.Axis(title='Time')),
+    ).properties(
+        width=400,
+        height=200
+    ).add_selection(
+        brush).interactive()
+
     figure = chart1.encode(
-                y=alt.Y('amplitude',axis=alt.Axis(title='Amplitude')))| chart1.encode(
-                y=alt.Y('amplitude after processing',axis=alt.Axis(title='Amplitude after'))).add_selection(
-            brush)
+        y=alt.Y('amplitude', axis=alt.Axis(title='Amplitude'))) | chart1.encode(
+        y=alt.Y('amplitude after processing', axis=alt.Axis(title='Amplitude after'))).add_selection(
+        brush)
     return figure
 
-#_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Plot Function_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _#
+#_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Plot Functions_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _#
 
-def show_plot(samples,samples_after_moidifcation , sampling_rate ):
+def currentState(df, size, num_of_element):
+        if st.session_state.size1 == 0:
+            step_df = df.iloc[0:num_of_element]
+        if st.session_state.flag == 0:
+            step_df = df.iloc[st.session_state.i : st.session_state.size1 - 1]
+        lines = plot_animation(step_df)
+        line_plot = st.altair_chart(lines)
+        line_plot = line_plot.altair_chart(lines)  
+        return line_plot
+
+
+def plotRep(df, size, start, num_of_element, line_plot):
+        for i in range(start, num_of_element - size):  
+                st.session_state.start=i 
+                st.session_state.startSize = i-1
+                step_df = df.iloc[i:size + i]
+                st.session_state.size1 = size + i
+                lines = plot_animation(step_df)
+                line_plot.altair_chart(lines)
+                time.sleep(.1)   #
+        if st.session_state.size1 == num_of_element - 1:
+            st.session_state.flag =1
+            step_df = df.iloc[0:num_of_element]
+            lines = plot_animation(step_df)
+            line_plot.altair_chart(lines)
+
+
+def show_plot(samples, samples_after_moidifcation, sampling_rate):
     """
         Function to show plot
 
@@ -330,25 +365,17 @@ def show_plot(samples,samples_after_moidifcation , sampling_rate ):
                                                                                                         'amplitude'])
     df_afterInverse = pd.DataFrame({'time_after': time_after[::500], 'amplitude after processing':
                                     samples_after_moidifcation[::500]}, columns=['time_after', 'amplitude after processing'])
-    # merge the 2 dataframes
-    common_df=df_afterUpload.merge(df_afterInverse,left_on='time', right_on='time_after')
-    # delete time after col to avoid repeatition
+    common_df = df_afterUpload.merge(df_afterInverse, left_on='time', right_on='time_after')
     common_df.pop("time_after")
-
-    lines = plot_animation(common_df)
-    line_plot = st.altair_chart(lines)
-    number_of_element = df_afterInverse.shape[0]  # number of elements in the dataframe
+    num_of_element = common_df.shape[0]  # number of elements in the dataframe
     burst = 10  # number of elements (months) to add to the plot
     size = burst
-    for i in range(1, number_of_element):
-        # iloc -> comvert dataframes to array
-        step_df = common_df.iloc[0:size] 
-        lines = plot_animation(step_df)
-        line_plot = line_plot.altair_chart(lines)
-        size = i + burst
-        st.session_state.size = size
-        
+    line_plot = currentState(common_df, size, num_of_element)
+    plotRep(common_df, size, st.session_state.start, num_of_element, line_plot)
+
+   
 #_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _Spectogram Function_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _#
+
 
 def spectogram(y,  title_of_graph):
     """
@@ -363,30 +390,13 @@ def spectogram(y,  title_of_graph):
         ----------
         spectrogram             
     """
-    # stft -> have higher resolution than fft to make spectrogram smooth 
-    samples_after_fourier = librosa.stft(y)  
-
+    D = librosa.stft(y)  # STFT of y
     # apply logarithm to cast amplitude to Decibels
-    amplitude_db = librosa.amplitude_to_db(np.abs(samples_after_fourier), ref=np.max)
+    S_db = librosa.amplitude_to_db(np.abs(D), ref=np.max)
     fig, ax = plt.subplots()
-    img = librosa.display.specshow(amplitude_db, x_axis='time', y_axis='linear', ax=ax)
+    img = librosa.display.specshow(S_db, x_axis='time', y_axis='linear', ax=ax)
     ax.set(title=title_of_graph)
     fig.colorbar(img, ax=ax, format="%+2.f dB")
     return plt.gcf()
 
-def audio_after_show(magnitude_time_after_inverse, sample_rate):
-    """
-        Function to display audio after apply changes
 
-        Parameters
-        ----------
-        magnitude_time_after_inverse : magnitude in time domain after inverse fourier 
-        sample rate  
-
-        Return
-        ----------
-        none            
-    """ 
-    st.sidebar.write("## Audio after")
-    sf.write("output.wav", magnitude_time_after_inverse, sample_rate)
-    st.sidebar.audio("output.wav")

@@ -1,4 +1,4 @@
-# Equalizer
+# Multi Equalizer
 
 Signal equalizer is a basic tool in the music and speech industry. It also serves in several biomedical
 applications like hearing aid abnormalities detection.
@@ -6,11 +6,11 @@ Its a web application that can open a signal and allow the user to change the ma
 
 ## Table of Contents
 
-- [Built with](#Built-with)
-- [Deployment](#Deployment)
-- [Design](#Design)
-- [Features](#Features)
-- [Authors](#Authors)
+- [Built with](#built-with)
+- [Deployment](#deployment)
+- [Design](#design)
+- [Features](#features)
+- [Authors](#authors)
 
 
 ## Built with
@@ -32,7 +32,7 @@ To start deployment
   streamlit run main.py
 ```
 
-## 🖌️ Design
+## Design 
 
 ![main widow](./images%20/mainwindow.png)
 
@@ -60,23 +60,22 @@ ECG arrhythmia) in the input biological signal.
 
 
 
-## 🔗 Authors
+## Authors
 
+First Semester - Biomedical Digital Signal Processing (SBE3110) class project created by:
 
-- Esraa Ali         
-sec : 1   BN : 12    
-[@Esraa-alii](https://github.com/Esraa-alii)
+| Team Members' Names                                  | Section | B.N. |
+| ---------------------------------------------------- | :-----: | :--: |
+| [Esraa Ali](https://github.com/Esraa-alii)         |    1    |  12  |
+| [Belal Mohamed](https://github.com/BelalMohamed2)       |    1    |  23  |
+| [Dina Hussam](https://github.com/Dinahussam) |    1    |  28  |
 
+### Submitted to:
 
-- Belal mohamed     
- sec : 1   BN : 23    
-[@BelalMohamed2](https://github.com/BelalMohamed2)
+- Dr. Tamer Basha & Eng. Abdullah Darwish
+  All rights reserved © 2023 to Team 17 - Systems & Biomedical Engineering, Cairo University (Class 2024)
 
-
-- Dina hussam      
-sec : 1   BN : 28   
-[@Dinahussam](https://github.com/Dinahussam)
-
+    
 
 
 

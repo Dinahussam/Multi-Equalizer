@@ -43,7 +43,7 @@ def main():
 
             st.session_state.show_spec = 0
             st.sidebar.write("## Audio before")
-            st.sidebar.audio(file_uploaded.name)
+            st.sidebar.audio(file_uploaded)
             if spectogram:
                 st.session_state.show_spec = 1
             else:
